@@ -7,7 +7,7 @@ export const config = {
     maxFileSize: Number(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024, // in bytes, default: 10 MB
     filenameLength: Number(process.env.FILENAME_LENGTH) || 8,
     filesDirPath: path.join(__dirname, '..', process.env.FILES_DIR || 'files'),
-    baseUrl: process.env.DOMAIN || 'https://example.com',
+    baseUrl: process.env.BASE_URL || 'https://example.com',
     maxFiles: Number(process.env.MAX_FILES) || 64,
     fileLifetime: Number(process.env.FILE_FILETIME) || 24 * 60 * 60, // in seconds, default: 1 day
     cleanTimeout: Number(process.env.CLEAN_TIMEOUT) || 5 * 60, // in seconds, default: 5 minutes
