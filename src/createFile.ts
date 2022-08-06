@@ -1,11 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const FILENAME_LENGTH = Number(process.env.FILENAME_LENGTH) || 8;
-const FILES_DIR = process.env.FILES_DIR || 'files';
-const BASE_URL = process.env.DOMAIN || 'https://example.com';
-
-const filesDirPath = path.join(__dirname, '..', FILES_DIR);
+import { config } from './config';
 
 const generateFilename = (length: number): string => {
     let filename = '';
@@ -32,10 +28,10 @@ const writeFileParts = async (filepath: string, parts: Buffer[]) => {
 };
 
 export const createFile = async (fileParts: Buffer[]) => {
-    const filename = generateFilename(FILENAME_LENGTH);
-    const fileUrl = `${BASE_URL}/${filename}`;
+    const filename = generateFilename(config.filenameLength);
+    const fileUrl = `${config.baseUrl}/${filename}`;
 
-    await writeFileParts(path.join(filesDirPath, filename), fileParts);
+    await writeFileParts(path.join(config.filesDirPath, filename), fileParts);
 
     return fileUrl;
 };

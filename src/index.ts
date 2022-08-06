@@ -1,18 +1,14 @@
 import net from 'net';
 
+import { config } from './config';
 import { createFile } from './createFile';
-
-const PORT = Number(process.env.PORT) || 9999;
-const MAX_CONNECTIONS = Number(process.env.MAX_CONNECTIONS) || 64;
-const SOCKET_TIMEOUT = Number(process.env.SOCKET_TIMEOUT) || 3000; // 3 seconds
-const MAX_FILE_SIZE = Number(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024; // 10 MB
 
 const server = net.createServer();
 
-server.maxConnections = MAX_CONNECTIONS;
+server.maxConnections = config.maxConnections;
 
 server.on('connection', socket => {
-    socket.setTimeout(SOCKET_TIMEOUT);
+    socket.setTimeout(config.socketTimeout);
 
     const fileParts: Buffer[] = [];
     let fileSize = 0;
@@ -20,8 +16,8 @@ server.on('connection', socket => {
     const appendFilePart = (part: Buffer) => {
         fileSize += part.byteLength;
 
-        if (fileSize > MAX_FILE_SIZE) {
-            socket.end(`File size should be less than ${MAX_FILE_SIZE} bytes\b`);
+        if (fileSize > config.maxFileSize) {
+            socket.end(`File size should be less than ${config.maxFileSize} bytes\b`);
 
             return;
         }
@@ -41,7 +37,7 @@ server.on('connection', socket => {
 });
 
 server.on('listening', () => {
-    console.info(`Server listening on port ${PORT}`);
+    console.info(`Server listening on port ${config.port}`);
 });
 
-server.listen(PORT);
+server.listen(config.port);
