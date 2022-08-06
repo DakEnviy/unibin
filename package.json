@@ -1,0 +1,17 @@
+{
+    "name": "unibin",
+    "version": "1.0.0",
+    "description": "TODO",
+    "main": "src/index.ts",
+    "repository": "https://github.com/DakEnviy/unibin.git",
+    "author": "DakEnviy",
+    "license": "MIT",
+    "scripts": {
+        "start": "ts-node src/index.ts"
+    },
+    "dependencies": {
+        "@types/node": "^16.10.2",
+        "ts-node": "^10.2.1",
+        "typescript": "^4.4.3"
+    }
+}
