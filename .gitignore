@@ -8,3 +8,5 @@ yarn.lock
 # IDEA files
 .idea
 
+# unibin files
+/files/
