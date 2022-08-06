@@ -2,6 +2,7 @@ import net from 'net';
 
 import { config } from './config';
 import { createFile } from './createFile';
+import { startCleanFilesJob } from './startCleanFilesJob';
 
 const server = net.createServer();
 
@@ -38,6 +39,8 @@ server.on('connection', socket => {
 
 server.on('listening', () => {
     console.info(`Server listening on port ${config.port}`);
+
+    startCleanFilesJob();
 });
 
 server.listen(config.port);
