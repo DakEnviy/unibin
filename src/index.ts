@@ -38,7 +38,7 @@ server.on('connection', socket => {
 });
 
 server.on('listening', () => {
-    console.info(`Server listening on port ${config.port}`);
+    console.info(`UniBin server has started on port ${config.port}`);
 
     startCleanFilesJob();
 });
