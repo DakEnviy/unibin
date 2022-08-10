@@ -11,19 +11,19 @@ server.maxConnections = config.maxConnections;
 server.on('connection', socket => {
     socket.setTimeout(config.socketTimeout);
 
-    const fileParts: Buffer[] = [];
-    let fileSize = 0;
+    const parts: Buffer[] = [];
+    let size = 0;
 
     const appendFilePart = (part: Buffer) => {
-        fileSize += part.byteLength;
+        size += part.byteLength;
 
-        if (fileSize > config.maxFileSize) {
+        if (size > config.maxFileSize) {
             socket.end(`File size should be less than ${config.maxFileSize} bytes\b`);
 
             return;
         }
 
-        fileParts.push(part);
+        parts.push(part);
     };
 
     socket.on('data', data => {
@@ -31,9 +31,9 @@ server.on('connection', socket => {
     });
 
     socket.on('timeout', async () => {
-        const fileUrl = await createFile(fileParts);
+        const url = await createFile(Buffer.concat(parts));
 
-        socket.end(`${fileUrl}\n`);
+        socket.end(`${url}\n`);
     });
 });
 
