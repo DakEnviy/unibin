@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 import { config } from './config';
+import { makeAnsiParserGen } from './ansiParser';
+import { IToken } from './ansiParser/types';
 
 const generateFilename = (length: number): string => {
     let filename = '';
@@ -19,6 +21,29 @@ const writeFile = async (filepath: string, content: Buffer) => {
     if (!fs.existsSync(dirpath)) {
         await fs.promises.mkdir(dirpath, { recursive: true });
     }
+
+    console.log(content.toString());
+
+    const parser = makeAnsiParserGen();
+
+    let idx = -1;
+    const tokens: IToken[] = [];
+
+    while (true) {
+        const result = parser.next(idx < content.byteLength ? content[idx] : -1);
+
+        if (result.done) {
+            break;
+        }
+
+        if (result.value) {
+            tokens.push(result.value);
+        } else {
+            ++idx;
+        }
+    }
+
+    console.log(tokens);
 
     await fs.promises.writeFile(filepath, content);
 };

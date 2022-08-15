@@ -1,6 +1,5 @@
 export enum TokenType {
-    EOF,
-    CSI,
+    SGR,
     Newline,
     Text,
 }
@@ -9,12 +8,8 @@ export interface ITokenBase {
     type: TokenType;
 }
 
-export interface ITokenEOF extends ITokenBase {
-    type: TokenType.EOF;
-}
-
-export interface ITokenCSI extends ITokenBase {
-    type: TokenType.CSI;
+export interface ITokenSGR extends ITokenBase {
+    type: TokenType.SGR;
     attrs: string[];
 }
 
@@ -27,4 +22,4 @@ export interface ITokenText extends ITokenBase {
     value: string;
 }
 
-export type IToken = ITokenEOF | ITokenCSI | ITokenNewline | ITokenText;
+export type IToken = ITokenSGR | ITokenNewline | ITokenText;

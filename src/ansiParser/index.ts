@@ -1,160 +1,203 @@
-import { IToken, ITokenEOF, ITokenCSI, ITokenNewline, ITokenText, TokenType } from './types';
+import { config } from '../config';
+import {
+    IToken,
+    ITokenSGR,
+    ITokenNewline,
+    ITokenText,
+    TokenType,
+} from './types';
+import { AnsiParserBuffer } from './buffer';
+import { char, isCharNumeric } from './utils';
 
-const CSI = '\x1B[';
-const SGRm = 'm';
-const CRLF = '\r\n';
+const EOF = -1;
+const ESC = char('\x1B');
+const CSI_2 = char('[');
+const SGR_DELIMITER = char(';');
+const SGR_END = char('m');
+const CR = char('\r');
+const LF = char('\n');
 
-const makeEOFToken = (): ITokenEOF => {
-    return { type: TokenType.EOF };
-}
-
-const makeTextToken = (value: string): ITokenText => {
-    return { type: TokenType.Text, value };
-};
-
-const makeCSIToken = (attrs: string[]): ITokenCSI => {
-    return { type: TokenType.CSI, attrs };
+const makeSGRToken = (attrs: string[]): ITokenSGR => {
+    return { type: TokenType.SGR, attrs };
 };
 
 const makeNewlineToken = (): ITokenNewline => {
     return { type: TokenType.Newline };
 };
 
-// TODO(DakEnviy): Change string to Buffer
-export const makeAnsiParser = (text: string) => {
-    const parse = () => {
-        let pos = 0;
-        let buf = '';
-        let end = 0;
+const makeTextToken = (value: string): ITokenText => {
+    return { type: TokenType.Text, value };
+};
 
-        const read = (n: number) => {
-            let m = 0;
+interface IState<TStateKeys extends string, TContext> {
+    next: (context: TContext) => TStateKeys | void;
+    onJoin?: (context: TContext) => void;
+    onExit?: (context: TContext) => void;
+}
 
-            while (n > 0 && pos < end) {
-                --n;
-                ++pos;
-                ++m
+type IStates<TStateKeys extends string, TContext> = {
+    [P in TStateKeys]: IState<TStateKeys, TContext>;
+};
+
+class FiniteStateMachine<TStateKeys extends string, TContext> {
+    private readonly states: IStates<TStateKeys, TContext>;
+    private readonly endStateKey: TStateKeys;
+
+    private currentStateKey: TStateKeys;
+
+    constructor(states: IStates<TStateKeys, TContext>, startStateKey: TStateKeys, endStateKey: TStateKeys) {
+        this.states = states;
+        this.currentStateKey = startStateKey;
+        this.endStateKey = endStateKey;
+    }
+
+    next(context: TContext) {
+        const currentState = this.states[this.currentStateKey];
+        const nextStateKey = currentState.next(context);
+
+        if (!nextStateKey) {
+            // TODO(DakEnviy): Make error
+            throw 'Undefined behavior';
+        }
+
+        if (nextStateKey !== this.currentStateKey) {
+            currentState.onExit?.(context);
+            this.states[nextStateKey].onJoin?.(context);
+        }
+
+        this.currentStateKey = nextStateKey;
+
+        return this.isEnd();
+    }
+
+    isEnd() {
+        return this.currentStateKey === this.endStateKey;
+    }
+}
+
+interface IAnsiParserContext {
+    tokens: IToken[];
+    buffer: AnsiParserBuffer;
+    char: number;
+}
+
+const startNext = (context: IAnsiParserContext) => {
+    switch (context.char) {
+    case EOF:
+        return 'eof';
+    case ESC:
+        return 'escape';
+    case CR:
+        return 'cr';
+    case LF:
+        return 'lf';
+    default:
+        return 'text';
+    }
+};
+
+const machine = new FiniteStateMachine({
+    start: {
+        next: startNext,
+    },
+    escape: {
+        next: (context: IAnsiParserContext) => {
+            if (context.char === CSI_2) {
+                return 'csi';
+            }
+        },
+    },
+    csi: {
+        next: (context: IAnsiParserContext) => {
+            if (isCharNumeric(context.char)) {
+                return 'sgrParameter';
             }
 
-            while (n--) {
-                const ch = text[pos++];
-
-                if (ch === undefined) {
-                    break;
-                }
-
-                buf += ch;
-                ++end;
-                ++m;
+            if (context.char === SGR_END) {
+                return 'sgrEnd';
+            }
+        },
+    },
+    sgrParameter: {
+        next: (context: IAnsiParserContext) => {
+            if (isCharNumeric(context.char)) {
+                return 'sgrParameter';
             }
 
-            return m;
-        };
-
-        const lookup = (n: number) => {
-            const prev = pos;
-            const m = read(n);
-            pos = prev;
-
-            return m;
-        };
-
-        const flush = (n: number) => {
-            const res = buf.substring(0, n);
-            buf = buf.substring(n);
-            return res;
-        };
-
-        const readWhile = (n: number, pred: () => boolean) => {
-            let temp = '';
-
-            while (pred()) {
-                const m = read(n);
-
-                if (m === 0) {
-                    // TODO(DakEnviy): Make error
-                    throw 'Unexpected EOF';
-                }
-
-                temp += flush(m);
+            if (context.char === SGR_DELIMITER) {
+                return 'sgrDelimiter';
             }
 
-            buf = temp + buf;
-
-            return temp.length;
-        };
-
-        const makePred = (n: number, pred: (m: number) => boolean) => () => {
-            return pred(lookup(n));
-        };
-
-        const makeEqPred = (seq: string) => {
-            return makePred(seq.length, () => buf.startsWith(seq));
-        };
-
-        const isEOFToken = makePred(1, m => m === 0);
-        const isCSIToken = makeEqPred(CSI);
-        const isNewlineToken = makeEqPred(CRLF);
-        const isTextToken = () => !isEOFToken() && !isCSIToken() && !isNewlineToken();
-
-        const isSGRm = makeEqPred(SGRm);
-        const isNotSGRm = () => !isSGRm();
-
-        const nextEOFToken = () => {
-            return makeEOFToken();
-        };
-
-        const nextCSIToken = () => {
-            read(CSI.length);
-            flush(CSI.length);
-
-            const m = readWhile(1, isNotSGRm);
-            // TODO(DakEnviy): Replace split
-            const attrs = flush(m).split(';');
-
-            read(SGRm.length);
-            flush(SGRm.length);
-
-            return makeCSIToken(attrs)
-        };
-
-        const nextNewlineToken = () => {
-            read(CRLF.length);
-            flush(CRLF.length);
-            return makeNewlineToken();
-        };
-
-        const nextTextToken = () => {
-            const m = readWhile(1, isTextToken);
-            return makeTextToken(flush(m));
-        };
-
-        const nextToken = (): IToken => {
-            if (isEOFToken()) {
-                return nextEOFToken();
+            if (context.char === SGR_END) {
+                return 'sgrEnd';
             }
-
-            if (isCSIToken()) {
-                return nextCSIToken();
+        },
+    },
+    sgrDelimiter: {
+        next: (context: IAnsiParserContext) => {
+            if (isCharNumeric(context.char)) {
+                return 'sgrParameter';
             }
-
-            if (isNewlineToken()) {
-                return nextNewlineToken();
+        },
+    },
+    sgrEnd: {
+        next: startNext,
+        onExit: (context: IAnsiParserContext) => {
+            // TODO(DakEnviy): Replace buffer
+            const text = new Buffer(context.buffer.flush()).toString();
+            context.tokens.push(makeSGRToken([text]));
+        },
+    },
+    cr: {
+        next: (context: IAnsiParserContext) => {
+            if (context.char === LF) {
+                return 'lf';
             }
+        },
+    },
+    lf: {
+        next: startNext,
+        onExit: (context: IAnsiParserContext) => {
+            context.tokens.push(makeNewlineToken());
+        },
+    },
+    text: {
+        next: startNext,
+        onExit: (context: IAnsiParserContext) => {
+            // TODO(DakEnviy): Replace buffer
+            const text = new Buffer(context.buffer.flush()).toString();
+            context.tokens.push(makeTextToken(text));
+        },
+    },
+    eof: {
+        next: (_context: IAnsiParserContext) => 'start',
+    },
+}, 'start', 'eof');
 
-            return nextTextToken();
-        };
-
-        const tokens: IToken[] = [];
-        let cur: IToken;
-
-        do {
-            cur = nextToken();
-            tokens.push(cur);
-        } while (cur.type !== TokenType.EOF);
-
-        return tokens;
+export const makeAnsiParserGen = function*() {
+    const context: IAnsiParserContext = {
+        tokens: [],
+        buffer: new AnsiParserBuffer(config.bufferSize),
+        char: EOF,
     };
 
-    return { parse };
+    while (true) {
+        const char: number = yield;
+
+        context.char = char;
+        const isEnd = machine.next(context);
+
+        context.buffer.write(char);
+        context.char = EOF;
+
+        let token: IToken | undefined;
+
+        while (token = context.tokens.shift()) {
+            yield token;
+        }
+
+        if (isEnd) {
+            return;
+        }
+    }
 };
