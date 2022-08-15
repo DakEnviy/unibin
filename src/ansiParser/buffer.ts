@@ -1,4 +1,4 @@
-export class AnsiParserBuffer {
+export class ParserBuffer {
     private readonly buffer: Uint8Array;
 
     private start: number = 0;

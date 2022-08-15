@@ -1,8 +1,10 @@
 import { config } from '../config';
-import { AnsiParserBuffer } from './buffer';
+import { ParserBuffer } from './buffer';
 import { char, isCharNumeric } from './utils';
 import type { IToken } from './tokens/types';
 import { makeNewlineToken, makeSGRToken, makeTextToken } from './tokens';
+import type { IAnsiParserContext } from './types';
+import { FiniteStateMachine } from './fsm';
 
 const EOF = -1;
 const ESC = char('\x1B');
@@ -11,58 +13,6 @@ const SGR_DELIMITER = char(';');
 const SGR_END = char('m');
 const CR = char('\r');
 const LF = char('\n');
-
-interface IState<TStateKeys extends string, TContext> {
-    next: (context: TContext) => TStateKeys | void;
-    onJoin?: (context: TContext) => void;
-    onExit?: (context: TContext) => void;
-}
-
-type IStates<TStateKeys extends string, TContext> = {
-    [P in TStateKeys]: IState<TStateKeys, TContext>;
-};
-
-class FiniteStateMachine<TStateKeys extends string, TContext> {
-    private readonly states: IStates<TStateKeys, TContext>;
-    private readonly endStateKey: TStateKeys;
-
-    private currentStateKey: TStateKeys;
-
-    constructor(states: IStates<TStateKeys, TContext>, startStateKey: TStateKeys, endStateKey: TStateKeys) {
-        this.states = states;
-        this.currentStateKey = startStateKey;
-        this.endStateKey = endStateKey;
-    }
-
-    next(context: TContext) {
-        const currentState = this.states[this.currentStateKey];
-        const nextStateKey = currentState.next(context);
-
-        if (!nextStateKey) {
-            // TODO(DakEnviy): Make error
-            throw 'Undefined behavior';
-        }
-
-        if (nextStateKey !== this.currentStateKey) {
-            currentState.onExit?.(context);
-            this.states[nextStateKey].onJoin?.(context);
-        }
-
-        this.currentStateKey = nextStateKey;
-
-        return this.isEnd();
-    }
-
-    isEnd() {
-        return this.currentStateKey === this.endStateKey;
-    }
-}
-
-interface IAnsiParserContext {
-    tokens: IToken[];
-    buffer: AnsiParserBuffer;
-    char: number;
-}
 
 const startNext = (context: IAnsiParserContext) => {
     switch (context.char) {
@@ -157,10 +107,10 @@ const machine = new FiniteStateMachine({
     },
 }, 'start', 'eof');
 
-export const makeAnsiParserGen = function*() {
+export const makeAnsiParser = function*() {
     const context: IAnsiParserContext = {
         tokens: [],
-        buffer: new AnsiParserBuffer(config.bufferSize),
+        buffer: new ParserBuffer(config.bufferSize),
         char: EOF,
     };
 

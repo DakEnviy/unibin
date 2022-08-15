@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { config } from './config';
-import { makeAnsiParserGen } from './ansiParser';
+import { makeAnsiParser } from './ansiParser';
 import type { IToken } from './ansiParser/tokens/types';
 
 const generateFilename = (length: number): string => {
@@ -24,7 +24,7 @@ const writeFile = async (filepath: string, content: Buffer) => {
 
     console.log(content.toString());
 
-    const parser = makeAnsiParserGen();
+    const parser = makeAnsiParser();
 
     let idx = -1;
     const tokens: IToken[] = [];
