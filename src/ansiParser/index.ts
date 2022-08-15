@@ -127,7 +127,7 @@ const machine = new FiniteStateMachine({
         next: startNext,
         onExit: (context: IAnsiParserContext) => {
             // TODO(DakEnviy): Replace buffer
-            const text = new Buffer(context.buffer.flush()).toString();
+            const text = Buffer.from(context.buffer.flush()).toString();
             context.tokens.push(makeSGRToken([text]));
         },
     },
@@ -148,7 +148,7 @@ const machine = new FiniteStateMachine({
         next: startNext,
         onExit: (context: IAnsiParserContext) => {
             // TODO(DakEnviy): Replace buffer
-            const text = new Buffer(context.buffer.flush()).toString();
+            const text = Buffer.from(context.buffer.flush()).toString();
             context.tokens.push(makeTextToken(text));
         },
     },
