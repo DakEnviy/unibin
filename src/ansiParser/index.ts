@@ -1,13 +1,8 @@
 import { config } from '../config';
-import {
-    IToken,
-    ITokenSGR,
-    ITokenNewline,
-    ITokenText,
-    TokenType,
-} from './types';
 import { AnsiParserBuffer } from './buffer';
 import { char, isCharNumeric } from './utils';
+import type { IToken } from './tokens/types';
+import { makeNewlineToken, makeSGRToken, makeTextToken } from './tokens';
 
 const EOF = -1;
 const ESC = char('\x1B');
@@ -16,18 +11,6 @@ const SGR_DELIMITER = char(';');
 const SGR_END = char('m');
 const CR = char('\r');
 const LF = char('\n');
-
-const makeSGRToken = (attrs: string[]): ITokenSGR => {
-    return { type: TokenType.SGR, attrs };
-};
-
-const makeNewlineToken = (): ITokenNewline => {
-    return { type: TokenType.Newline };
-};
-
-const makeTextToken = (value: string): ITokenText => {
-    return { type: TokenType.Text, value };
-};
 
 interface IState<TStateKeys extends string, TContext> {
     next: (context: TContext) => TStateKeys | void;

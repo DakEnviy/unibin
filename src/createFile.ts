@@ -3,7 +3,7 @@ import path from 'path';
 
 import { config } from './config';
 import { makeAnsiParserGen } from './ansiParser';
-import { IToken } from './ansiParser/types';
+import type { IToken } from './ansiParser/tokens/types';
 
 const generateFilename = (length: number): string => {
     let filename = '';

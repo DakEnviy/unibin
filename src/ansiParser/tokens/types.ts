@@ -1,8 +1,4 @@
-export enum TokenType {
-    SGR,
-    Newline,
-    Text,
-}
+import { TokenType } from './constants';
 
 export interface ITokenBase {
     type: TokenType;
@@ -19,7 +15,7 @@ export interface ITokenNewline extends ITokenBase {
 
 export interface ITokenText extends ITokenBase {
     type: TokenType.Text;
-    value: string;
+    text: string;
 }
 
 export type IToken = ITokenSGR | ITokenNewline | ITokenText;
