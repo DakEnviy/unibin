@@ -1,3 +1,5 @@
+import { TextDecoder } from 'util';
+
 import { config } from '../../config';
 import { ParserBuffer } from '../lib/buffer';
 import type { IAnsiToken } from './tokens/types';
@@ -11,6 +13,8 @@ import { SgrTokenType } from '../sgrParser/tokens/constants';
 import { SgrParserState } from '../sgrParser/constants';
 import { ParserError } from '../lib/errors';
 import { makeSgrParserMachine } from '../sgrParser';
+
+const textDecoder = new TextDecoder('utf-8');
 
 export const makeAnsiParserMachine = () => {
     const sgrParserMachine = makeSgrParserMachine();
@@ -80,7 +84,7 @@ export const makeAnsiParserMachine = () => {
         text: {
             next: startNext,
             onExit: context => {
-                const text = Buffer.from(context.buffer.flush()).toString();
+                const text = textDecoder.decode(context.buffer.flush());
 
                 context.tokens.push(makeTextToken(text));
             },
@@ -130,7 +134,7 @@ export const makeAnsiParser = function*() {
     }
 };
 
-export const makeBufferAnsiParser = function*() {
+export const makeAnsiBufferParser = function*() {
     const ansiParser = makeAnsiParser();
 
     while (true) {
