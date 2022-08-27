@@ -2,8 +2,9 @@ import fs from 'fs';
 import path from 'path';
 
 import { config } from './config';
-import { makeAnsiParser } from './ansiParser';
-import type { IToken } from './ansiParser/tokens/types';
+import { makeAnsiParser } from './parser/ansiParser';
+import type { IAnsiToken } from './parser/ansiParser/tokens/types';
+import { EOF } from './parser/lib/constants';
 
 const generateFilename = (length: number): string => {
     let filename = '';
@@ -27,10 +28,10 @@ const writeFile = async (filepath: string, content: Buffer) => {
     const parser = makeAnsiParser();
 
     let idx = -1;
-    const tokens: IToken[] = [];
+    const tokens: IAnsiToken[] = [];
 
     while (true) {
-        const result = parser.next(idx < content.byteLength ? content[idx] : -1);
+        const result = parser.next(idx < content.byteLength ? content[idx] : EOF);
 
         if (result.done) {
             break;

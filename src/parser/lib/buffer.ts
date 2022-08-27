@@ -26,6 +26,7 @@ export class ParserBuffer {
         ++this.length;
     }
 
+    // TODO(DakEnviy): Optimize it
     flush(length?: number) {
         length = length ?? this.length;
 
