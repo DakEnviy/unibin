@@ -1,3 +1,5 @@
+import { ParserError } from './errors';
+
 export const char = (char: string): number => {
     return char.charCodeAt(0);
 };
@@ -11,8 +13,7 @@ export const isCharNumeric = (char: number): boolean => {
 
 export const charToDigit = (char: number): number => {
     if (!isCharNumeric(char)) {
-        // TODO(DakEnviy): Make error
-        throw 'Char not numeric';
+        throw new ParserError(`Expected numeric char, but got char with code: ${char}`);
     }
 
     return char - CHAR_CODE_0;

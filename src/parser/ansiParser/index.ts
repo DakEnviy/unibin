@@ -10,6 +10,7 @@ import { sgrParserMachine } from '../sgrParser';
 import type { ICharRef } from '../lib/types';
 import { SgrTokenType } from '../sgrParser/tokens/constants';
 import { SgrParserState } from '../sgrParser/constants';
+import { ParserError } from '../lib/errors';
 
 const startNext = (context: IAnsiParserContext) => {
     switch (context.charRef.current) {
@@ -43,8 +44,7 @@ const ansiParserMachine = new FiniteStateMachine<AnsiParserState, IAnsiParserCon
             }
 
             if (sgrParserMachine.next(context.sgrParserContext) === undefined) {
-                // TODO(DakEnviy): Make error
-                throw 'Undefined behavior';
+                throw new ParserError('Undefined behavior');
             }
 
             return AnsiParserState.Sgr;
@@ -52,8 +52,7 @@ const ansiParserMachine = new FiniteStateMachine<AnsiParserState, IAnsiParserCon
         onExit: context => {
             for (const token of context.sgrParserContext.tokens) {
                 if (token.type !== SgrTokenType.Self) {
-                    // TODO(DakEnviy): Make error
-                    throw 'Not SGR token';
+                    throw new ParserError(`Expected SGR token, but got: ${token.type}`);
                 }
 
                 context.tokens.push(makeSgrToken(token.attributes));
@@ -108,8 +107,7 @@ export const makeAnsiParser = function*() {
         const stateKey = ansiParserMachine.next(context);
 
         if (stateKey === undefined) {
-            // TODO(DakEnviy): Make error
-            throw 'Undefined behavior';
+            throw new ParserError('Undefined behavior');
         }
 
         context.buffer.write(char);

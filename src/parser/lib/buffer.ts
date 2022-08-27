@@ -1,3 +1,5 @@
+import { ParserError } from './errors';
+
 export class ParserBuffer {
     private readonly buffer: Uint8Array;
 
@@ -10,8 +12,7 @@ export class ParserBuffer {
 
     write(byte: number) {
         if (this.length >= this.buffer.length) {
-            // TODO(DakEnviy): Make error
-            throw 'this.length >= this.buffer.length';
+            throw new ParserError(`Buffer is overflow, max length: ${this.buffer.length}`);
         }
 
         this.buffer[this.end] = byte;
@@ -22,8 +23,7 @@ export class ParserBuffer {
         length = length ?? this.length;
 
         if (length > this.length) {
-            // TODO(DakEnviy): Make error
-            throw 'length > this.length';
+            throw new ParserError(`Cannot flush ${length} bytes, current length: ${this.length}`);
         }
 
         const flushedBuffer = new Uint8Array(length);
