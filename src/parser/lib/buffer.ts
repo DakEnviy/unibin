@@ -29,7 +29,7 @@ export class ParserBuffer {
         const flushedBuffer = new Uint8Array(length);
 
         for (let i = 0; i < length; ++i) {
-            flushedBuffer[i] = this.buffer[this.getAbsoluteIndex(i)];
+            flushedBuffer[i] = this.buffer[this.getBufferIndex(i)]!;
         }
 
         this.start = (this.start + length) % this.buffer.length;
@@ -42,7 +42,7 @@ export class ParserBuffer {
         return (this.start + this.length) % this.buffer.length;
     }
 
-    private getAbsoluteIndex(index: number) {
+    private getBufferIndex(index: number) {
         return (this.start + index) % this.buffer.length;
     }
 }

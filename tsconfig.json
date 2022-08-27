@@ -1,3 +1,9 @@
 {
     "extends": "ts-node/node16/tsconfig.json",
+    "compilerOptions": {
+        "noImplicitOverride": true,
+        "noUncheckedIndexedAccess": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
+    }
 }

@@ -24,7 +24,7 @@ export const bufferToNumber = (buffer: Uint8Array): number => {
     let base = 1;
 
     for (let i = 1; i <= buffer.length; ++i) {
-        result += charToDigit(buffer[buffer.length - i]) * base;
+        result += charToDigit(buffer[buffer.length - i]!) * base;
         base *= 10;
     }
 
