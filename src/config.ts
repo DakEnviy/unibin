@@ -11,6 +11,5 @@ export const config = {
     maxFiles: Number(process.env.MAX_FILES) || 64,
     fileLifetime: Number(process.env.FILE_FILETIME) || 24 * 60 * 60, // in seconds, default: 1 day
     cleanTimeout: Number(process.env.CLEAN_TIMEOUT) || 5 * 60, // in seconds, default: 5 minutes
-    // TODO(DakEnviy): Think about buffer size
-    bufferSize: Number(process.env.BUFFER_SIZE) || 1024, // in bytes, default: 1 KB
+    bufferSize: Number(process.env.BUFFER_SIZE) || 32 * 1024, // in bytes, default: 32 KB
 };

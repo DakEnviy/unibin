@@ -31,6 +31,7 @@ const writeFile = async (filepath: string, content: Buffer) => {
     const tokens: IAnsiToken[] = [];
 
     while (true) {
+        // TODO(DakEnviy): Add handling of parser errors
         const result = parser.next(idx < content.byteLength ? content[idx] : EOF);
 
         if (result.done) {
