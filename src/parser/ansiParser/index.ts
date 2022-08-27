@@ -4,38 +4,39 @@ import type { IAnsiToken } from './tokens/types';
 import { makeNewlineToken, makeSgrToken, makeTextToken } from './tokens';
 import type { IAnsiParserContext } from './types';
 import { FiniteStateMachine } from '../lib/fsm';
-import { CR, LF } from './constants';
+import { AnsiParserState, CR, LF } from './constants';
 import { EOF } from '../lib/constants';
 import { sgrParserMachine } from '../sgrParser';
 import type { ICharRef } from '../lib/types';
 import { SgrTokenType } from '../sgrParser/tokens/constants';
+import { SgrParserState } from '../sgrParser/constants';
 
 const startNext = (context: IAnsiParserContext) => {
     switch (context.charRef.current) {
     case EOF:
-        return 'start';
+        return AnsiParserState.Start;
     case CR:
-        return 'cr';
+        return AnsiParserState.Cr;
     case LF:
-        return 'lf';
+        return AnsiParserState.Lf;
     }
 
     if (sgrParserMachine.next(context.sgrParserContext) !== undefined) {
-        return 'sgr';
+        return AnsiParserState.Sgr;
     }
 
     // TODO(DakEnviy): Make condition for text to filter it
-    return 'text';
+    return AnsiParserState.Text;
 };
 
 // TODO(DakEnviy): Think about constructor
-const ansiParserMachine = new FiniteStateMachine({
+const ansiParserMachine = new FiniteStateMachine<AnsiParserState, IAnsiParserContext>({
     start: {
         next: startNext,
     },
     sgr: {
-        next: (context: IAnsiParserContext) => {
-            if (sgrParserMachine.current === 'sgrEnd') {
+        next: context => {
+            if (sgrParserMachine.current === SgrParserState.SgrEnd) {
                 sgrParserMachine.gotoStart(context.sgrParserContext);
 
                 return startNext(context);
@@ -46,9 +47,9 @@ const ansiParserMachine = new FiniteStateMachine({
                 throw 'Undefined behavior';
             }
 
-            return 'sgr';
+            return AnsiParserState.Sgr;
         },
-        onExit: (context: IAnsiParserContext) => {
+        onExit: context => {
             for (const token of context.sgrParserContext.tokens) {
                 if (token.type !== SgrTokenType.Self) {
                     // TODO(DakEnviy): Make error
@@ -62,28 +63,28 @@ const ansiParserMachine = new FiniteStateMachine({
         },
     },
     cr: {
-        next: (context: IAnsiParserContext) => {
+        next: context => {
             if (context.charRef.current === LF) {
-                return 'lf';
+                return AnsiParserState.Lf;
             }
         },
     },
     lf: {
         next: startNext,
-        onExit: (context: IAnsiParserContext) => {
+        onExit: context => {
             context.buffer.flush();
             context.tokens.push(makeNewlineToken());
         },
     },
     text: {
         next: startNext,
-        onExit: (context: IAnsiParserContext) => {
+        onExit: context => {
             const text = Buffer.from(context.buffer.flush()).toString();
 
             context.tokens.push(makeTextToken(text));
         },
     },
-}, 'start');
+}, AnsiParserState.Start);
 
 export const makeAnsiParser = function*() {
     const buffer = new ParserBuffer(config.bufferSize);
@@ -120,7 +121,7 @@ export const makeAnsiParser = function*() {
             yield token;
         }
 
-        if (stateKey === 'start') {
+        if (stateKey === AnsiParserState.Start) {
             return;
         }
     }

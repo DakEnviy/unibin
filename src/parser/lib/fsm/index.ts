@@ -1,6 +1,5 @@
 import type { IStates } from './types';
 
-// TODO(DakEnviy): Replace TStateKeys to enum
 export class FiniteStateMachine<TStateKeys extends string, TContext> {
     private readonly states: IStates<TStateKeys, TContext>;
     private readonly startStateKey: TStateKeys;

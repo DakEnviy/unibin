@@ -1,7 +1,7 @@
 import { FiniteStateMachine } from '../lib/fsm';
 import { bufferToNumber, isCharNumeric } from '../lib/utils';
 import type { ISgrParserContext } from './types';
-import { CSI_2, ESC, SGR_DELIMITER, SGR_END } from './constants';
+import { CSI_2, ESC, SGR_DELIMITER, SGR_END, SgrParserState } from './constants';
 import { makeSgrAttributeToken, makeSgrSelfToken } from './tokens';
 import { SgrTokenType } from './tokens/constants';
 import type { ISgrToken } from './tokens/types';
@@ -10,9 +10,9 @@ import { EOF } from '../lib/constants';
 const startNext = (context: ISgrParserContext) => {
     switch (context.charRef.current) {
     case EOF:
-        return 'start';
+        return SgrParserState.Start;
     case ESC:
-        return 'escape';
+        return SgrParserState.Escape;
     }
 };
 
@@ -21,61 +21,61 @@ const flushOnExit = (context: ISgrParserContext) => {
 };
 
 // TODO(DakEnviy): Think about constructor
-export const sgrParserMachine = new FiniteStateMachine({
+export const sgrParserMachine = new FiniteStateMachine<SgrParserState, ISgrParserContext>({
     start: {
         next: startNext,
     },
     escape: {
-        next: (context: ISgrParserContext) => {
+        next: context => {
             if (context.charRef.current === CSI_2) {
-                return 'csi';
+                return SgrParserState.Csi;
             }
         },
         onExit: flushOnExit,
     },
     csi: {
-        next: (context: ISgrParserContext) => {
+        next: context => {
             if (isCharNumeric(context.charRef.current)) {
-                return 'sgrAttribute';
+                return SgrParserState.SgrAttribute;
             }
 
             if (context.charRef.current === SGR_END) {
-                return 'sgrEnd';
+                return SgrParserState.SgrEnd;
             }
         },
         onExit: flushOnExit,
     },
     sgrAttribute: {
-        next: (context: ISgrParserContext) => {
+        next: context => {
             if (isCharNumeric(context.charRef.current)) {
-                return 'sgrAttribute';
+                return SgrParserState.SgrAttribute;
             }
 
             if (context.charRef.current === SGR_DELIMITER) {
-                return 'sgrDelimiter';
+                return SgrParserState.SgrDelimiter;
             }
 
             if (context.charRef.current === SGR_END) {
-                return 'sgrEnd';
+                return SgrParserState.SgrEnd;
             }
         },
-        onExit: (context: ISgrParserContext) => {
+        onExit: context => {
             const value = bufferToNumber(context.buffer.flush());
 
             context.tokens.push(makeSgrAttributeToken(value));
         },
     },
     sgrDelimiter: {
-        next: (context: ISgrParserContext) => {
+        next: context => {
             if (isCharNumeric(context.charRef.current)) {
-                return 'sgrAttribute';
+                return SgrParserState.SgrAttribute;
             }
         },
         onExit: flushOnExit,
     },
     sgrEnd: {
         next: startNext,
-        onExit: (context: ISgrParserContext) => {
+        onExit: context => {
             context.buffer.flush();
 
             const attributes: number[] = [];
@@ -89,4 +89,4 @@ export const sgrParserMachine = new FiniteStateMachine({
             context.tokens.push(makeSgrSelfToken(attributes));
         },
     },
-}, 'start');
+}, SgrParserState.Start);
