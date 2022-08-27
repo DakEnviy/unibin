@@ -30,6 +30,7 @@ server.on('connection', socket => {
         appendFilePart(data);
     });
 
+    // TODO(DakEnviy): Test: close connection before timeout event has been invoked
     socket.on('timeout', async () => {
         const url = await createFile(Buffer.concat(parts));
 

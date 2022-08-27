@@ -129,3 +129,34 @@ export const makeAnsiParser = function*() {
         }
     }
 };
+
+// TODO(DakEnviy): Update typescript to latest version
+export const makeBufferAnsiParser = function*() {
+    const ansiParser = makeAnsiParser();
+
+    while (true) {
+        const part: Uint8Array | undefined = yield;
+
+        let index = -1;
+
+        while (true) {
+            const char = part && index >= 0 ? part[index] : EOF;
+
+            if (char === undefined) {
+                break;
+            }
+
+            const result = ansiParser.next(char);
+
+            if (result.done) {
+                return;
+            }
+
+            if (result.value) {
+                yield result.value;
+            } else {
+                ++index;
+            }
+        }
+    }
+};

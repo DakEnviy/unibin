@@ -2,9 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 import { config } from './config';
-import { makeAnsiParser } from './parser/ansiParser';
+import { makeBufferAnsiParser } from './parser/ansiParser';
 import type { IAnsiToken } from './parser/ansiParser/tokens/types';
-import { EOF } from './parser/lib/constants';
 
 const generateFilename = (length: number): string => {
     let filename = '';
@@ -25,14 +24,15 @@ const writeFile = async (filepath: string, content: Buffer) => {
 
     console.log(content.toString());
 
-    const parser = makeAnsiParser();
+    const parts = [content];
+    const parser = makeBufferAnsiParser();
 
-    let idx = -1;
+    let index = -1;
     const tokens: IAnsiToken[] = [];
 
     while (true) {
         // TODO(DakEnviy): Add handling of parser errors
-        const result = parser.next(idx < content.byteLength ? content[idx] : EOF);
+        const result = parser.next(index < parts.length ? parts[index] : undefined);
 
         if (result.done) {
             break;
@@ -41,7 +41,7 @@ const writeFile = async (filepath: string, content: Buffer) => {
         if (result.value) {
             tokens.push(result.value);
         } else {
-            ++idx;
+            ++index;
         }
     }
 
