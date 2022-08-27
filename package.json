@@ -1,7 +1,7 @@
 {
     "name": "unibin",
     "version": "1.0.0",
-    "description": "TODO",
+    "description": "PasteBin + TermBin. Simple tool for sharing terminal and other output",
     "main": "src/index.ts",
     "repository": "https://github.com/DakEnviy/unibin.git",
     "author": "DakEnviy",
