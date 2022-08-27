@@ -130,7 +130,6 @@ export const makeAnsiParser = function*() {
     }
 };
 
-// TODO(DakEnviy): Update typescript to latest version
 export const makeBufferAnsiParser = function*() {
     const ansiParser = makeAnsiParser();
 
