@@ -37,8 +37,9 @@ const cleanFiles = async () => {
         await Promise.all(oldFiles.map(filepath => fs.promises.unlink(filepath)));
 
         return oldFiles;
-    } catch {
-        // TODO(DakEnviy): Add logging and / or handling
+    } catch (error) {
+        console.error('Failed to clean files');
+        console.error(error);
     }
 };
 
