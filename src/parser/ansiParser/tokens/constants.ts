@@ -1,5 +1,6 @@
 export enum AnsiTokenType {
-    Sgr,
+    Escape,
     Newline,
+    CarriageReturn,
     Text,
 }

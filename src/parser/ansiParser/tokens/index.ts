@@ -1,14 +1,19 @@
-import type { IAnsiTokenNewline, IAnsiTokenSgr, IAnsiTokenText } from './types';
+import type { IEscapeToken } from '../../escapeParser/tokens/types';
+import type { IAnsiTokenCarriageReturn, IAnsiTokenNewline, IAnsiTokenEscape, IAnsiTokenText } from './types';
 import { AnsiTokenType } from './constants';
 
-export const makeSgrToken = (attributes: number[]): IAnsiTokenSgr => {
-    return { type: AnsiTokenType.Sgr, attributes };
+export const makeAnsiEscapeToken = (token: IEscapeToken): IAnsiTokenEscape => {
+    return { type: AnsiTokenType.Escape, token };
 };
 
-export const makeNewlineToken = (): IAnsiTokenNewline => {
+export const makeAnsiNewlineToken = (): IAnsiTokenNewline => {
     return { type: AnsiTokenType.Newline };
 };
 
-export const makeTextToken = (text: string): IAnsiTokenText => {
+export const makeAnsiCarriageReturnToken = (): IAnsiTokenCarriageReturn => {
+    return { type: AnsiTokenType.CarriageReturn };
+};
+
+export const makeAnsiTextToken = (text: string): IAnsiTokenText => {
     return { type: AnsiTokenType.Text, text };
 };

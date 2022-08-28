@@ -17,15 +17,15 @@ export class FiniteStateMachine<TStateKeys extends string, TContext> {
         return this.currentStateKey;
     }
 
-    goto(stateKey: TStateKeys, context: TContext) {
+    goto(nextStateKey: TStateKeys, context: TContext) {
         const currentState = this.states[this.currentStateKey];
 
-        if (stateKey !== this.currentStateKey) {
-            currentState.onExit?.(context);
-            this.states[stateKey].onJoin?.(context);
+        if (nextStateKey !== this.currentStateKey) {
+            currentState.onExit?.(context, nextStateKey);
+            this.states[nextStateKey].onJoin?.(context, this.currentStateKey);
         }
 
-        this.currentStateKey = stateKey;
+        this.currentStateKey = nextStateKey;
     }
 
     gotoStart(context: TContext) {

@@ -1,16 +1,21 @@
+import type { IEscapeToken } from '../../escapeParser/tokens/types';
 import type { AnsiTokenType } from './constants';
 
 export interface IAnsiTokenBase {
     type: AnsiTokenType;
 }
 
-export interface IAnsiTokenSgr extends IAnsiTokenBase {
-    type: AnsiTokenType.Sgr;
-    attributes: number[];
+export interface IAnsiTokenEscape extends IAnsiTokenBase {
+    type: AnsiTokenType.Escape;
+    token: IEscapeToken;
 }
 
 export interface IAnsiTokenNewline extends IAnsiTokenBase {
     type: AnsiTokenType.Newline;
+}
+
+export interface IAnsiTokenCarriageReturn extends IAnsiTokenBase {
+    type: AnsiTokenType.CarriageReturn;
 }
 
 export interface IAnsiTokenText extends IAnsiTokenBase {
@@ -18,4 +23,4 @@ export interface IAnsiTokenText extends IAnsiTokenBase {
     text: string;
 }
 
-export type IAnsiToken = IAnsiTokenSgr | IAnsiTokenNewline | IAnsiTokenText;
+export type IAnsiToken = IAnsiTokenEscape | IAnsiTokenNewline | IAnsiTokenCarriageReturn | IAnsiTokenText;

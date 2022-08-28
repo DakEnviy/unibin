@@ -1,8 +1,8 @@
 import type { IAnsiToken } from './tokens/types';
 import type { IParserContextBase } from '../lib/types';
-import type { ISgrParserContext } from '../sgrParser/types';
+import type { IEscapeParserContext } from '../escapeParser/types';
 
 export interface IAnsiParserContext extends IParserContextBase {
-    sgrParserContext: ISgrParserContext;
+    escapeParserContext: IEscapeParserContext;
     tokens: IAnsiToken[];
 }

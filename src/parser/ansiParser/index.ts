@@ -3,21 +3,20 @@ import { TextDecoder } from 'util';
 import { config } from '../../config';
 import { ParserBuffer } from '../lib/buffer';
 import type { IAnsiToken } from './tokens/types';
-import { makeNewlineToken, makeSgrToken, makeTextToken } from './tokens';
+import { makeAnsiCarriageReturnToken, makeAnsiNewlineToken, makeAnsiEscapeToken, makeAnsiTextToken } from './tokens';
 import type { IAnsiParserContext } from './types';
 import { FiniteStateMachine } from '../lib/fsm';
 import { AnsiParserState, CR, LF } from './constants';
 import { EOF } from '../lib/constants';
 import type { ICharRef } from '../lib/types';
-import { SgrTokenType } from '../sgrParser/tokens/constants';
-import { SgrParserState } from '../sgrParser/constants';
+import { EscapeTokenType } from '../escapeParser/tokens/constants';
 import { ParserError } from '../lib/errors';
-import { makeSgrParserMachine } from '../sgrParser';
+import { isEndEscapeStateKey, makeEscapeParserMachine } from '../escapeParser';
 
 const textDecoder = new TextDecoder('utf-8');
 
 export const makeAnsiParserMachine = () => {
-    const sgrParserMachine = makeSgrParserMachine();
+    const escapeParserMachine = makeEscapeParserMachine();
 
     const startNext = (context: IAnsiParserContext) => {
         switch (context.charRef.current) {
@@ -29,8 +28,8 @@ export const makeAnsiParserMachine = () => {
             return AnsiParserState.Lf;
         }
 
-        if (sgrParserMachine.next(context.sgrParserContext) !== undefined) {
-            return AnsiParserState.Sgr;
+        if (escapeParserMachine.next(context.escapeParserContext) !== undefined) {
+            return AnsiParserState.Escape;
         }
 
         // TODO(DakEnviy): Make condition for text to filter it
@@ -41,30 +40,30 @@ export const makeAnsiParserMachine = () => {
         start: {
             next: startNext,
         },
-        sgr: {
+        escape: {
             next: context => {
-                if (sgrParserMachine.current === SgrParserState.SgrEnd) {
-                    sgrParserMachine.gotoStart(context.sgrParserContext);
+                if (isEndEscapeStateKey(escapeParserMachine.current)) {
+                    escapeParserMachine.gotoStart(context.escapeParserContext);
 
                     return startNext(context);
                 }
 
-                if (sgrParserMachine.next(context.sgrParserContext) === undefined) {
+                if (escapeParserMachine.next(context.escapeParserContext) === undefined) {
                     throw new ParserError('Undefined behavior');
                 }
 
-                return AnsiParserState.Sgr;
+                return AnsiParserState.Escape;
             },
             onExit: context => {
-                for (const token of context.sgrParserContext.tokens) {
-                    if (token.type !== SgrTokenType.Self) {
-                        throw new ParserError(`Expected SGR token, but got: ${token.type}`);
+                for (const token of context.escapeParserContext.tokens) {
+                    if (token.type === EscapeTokenType.Parameter) {
+                        throw new ParserError(`Got unexpected parameter token with value: ${token.value}`);
                     }
 
-                    context.tokens.push(makeSgrToken(token.attributes));
+                    context.tokens.push(makeAnsiEscapeToken(token));
                 }
 
-                context.sgrParserContext.tokens.length = 0;
+                context.escapeParserContext.tokens.length = 0;
             },
         },
         cr: {
@@ -72,13 +71,21 @@ export const makeAnsiParserMachine = () => {
                 if (context.charRef.current === LF) {
                     return AnsiParserState.Lf;
                 }
+
+                return startNext(context);
+            },
+            onExit: (context, to) => {
+                if (to !== AnsiParserState.Lf) {
+                    context.buffer.flush();
+                    context.tokens.push(makeAnsiCarriageReturnToken());
+                }
             },
         },
         lf: {
             next: startNext,
             onExit: context => {
                 context.buffer.flush();
-                context.tokens.push(makeNewlineToken());
+                context.tokens.push(makeAnsiNewlineToken());
             },
         },
         text: {
@@ -86,7 +93,7 @@ export const makeAnsiParserMachine = () => {
             onExit: context => {
                 const text = textDecoder.decode(context.buffer.flush());
 
-                context.tokens.push(makeTextToken(text));
+                context.tokens.push(makeAnsiTextToken(text));
             },
         },
     }, AnsiParserState.Start);
@@ -101,7 +108,7 @@ export const makeAnsiParser = function*() {
     const context: IAnsiParserContext = {
         buffer,
         charRef,
-        sgrParserContext: {
+        escapeParserContext: {
             buffer,
             charRef,
             tokens: [],

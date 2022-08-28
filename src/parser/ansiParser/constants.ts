@@ -5,7 +5,7 @@ export const LF = char('\n');
 
 export enum AnsiParserState {
     Start = 'start',
-    Sgr = 'sgr',
+    Escape = 'escape',
     Cr = 'cr',
     Lf = 'lf',
     Text = 'text',

@@ -11,6 +11,7 @@ server.maxConnections = config.maxConnections;
 server.on('connection', socket => {
     socket.setTimeout(config.socketTimeout);
 
+    // TODO(DakEnviy): Delete file if any error has happen
     const createTermFileStream = makeCreateTermFileStream();
     let fileSize = 0;
 
@@ -42,8 +43,14 @@ server.on('connection', socket => {
             const result = createTermFileStream.next();
 
             // TODO(DakEnviy): Think about corner cases
-            if (result.done && result.value) {
-                socket.end(`${result.value}\n`);
+            if (result.done) {
+                if (result.value) {
+                    socket.end(`${result.value}\n`);
+                } else {
+                    socket.end('Error\n');
+                }
+            } else {
+                socket.end('Error\n');
             }
         } catch (error) {
             console.error('Failed to get result from create term file stream');
