@@ -20,10 +20,9 @@ server.on('connection', socket => {
     socket.on('data', data => {
         fileSize += data.byteLength;
 
-        // TODO(DakEnviy): Think about it
         if (fileSize > config.maxFileSize) {
-            // @ts-ignore
             createTermFileStream.return();
+
             socket.end(`File size should be less than ${config.maxFileSize} bytes\b`);
 
             return;
