@@ -27,13 +27,12 @@ const generateFilenameStrict = (length: number): string => {
 export const makeCreateTermFileStream = function*() {
     const filename = generateFilenameStrict(config.filenameLength);
 
-    const writeStream = fs.createWriteStream(path.join(config.filesDirPath, filename), 'utf-8');
     const termFileStream = makeTermFileStream();
+    const writeStream = fs.createWriteStream(path.join(config.filesDirPath, filename), 'utf-8');
 
     let part: Uint8Array | undefined = undefined;
 
     while (true) {
-        // TODO(DakEnviy): Add handling of parser errors
         const result = termFileStream.next(part);
 
         if (result.done) {

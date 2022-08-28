@@ -29,16 +29,26 @@ server.on('connection', socket => {
             return;
         }
 
-        createTermFileStream.next(data);
+        try {
+            createTermFileStream.next(data);
+        } catch (error) {
+            console.error('Failed to handle data chunk');
+            console.error(error);
+        }
     });
 
     // TODO(DakEnviy): Test: close connection before timeout event has been invoked
     socket.on('timeout', () => {
-        const result = createTermFileStream.next();
+        try {
+            const result = createTermFileStream.next();
 
-        // TODO(DakEnviy): Think about corner cases
-        if (result.done && result.value) {
-            socket.end(`${result.value}\n`);
+            // TODO(DakEnviy): Think about corner cases
+            if (result.done && result.value) {
+                socket.end(`${result.value}\n`);
+            }
+        } catch (error) {
+            console.error('Failed to get result from create term file stream');
+            console.error(error);
         }
     });
 });
