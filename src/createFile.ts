@@ -14,50 +14,38 @@ const generateFilename = (length: number): string => {
     return filename.substring(0, length);
 };
 
-const writeFile = async (filepath: string, content: Buffer) => {
-    const dirpath = path.dirname(filepath);
+const generateFilenameStrict = (length: number): string => {
+    const filename = generateFilename(length);
 
-    if (!fs.existsSync(dirpath)) {
-        await fs.promises.mkdir(dirpath, { recursive: true });
+    if (fs.existsSync(path.join(config.filesDirPath, filename))) {
+        return generateFilenameStrict(length);
     }
 
-    console.log(content.toString());
+    return filename;
+};
 
-    const parts = [content];
-    const stream = makeTermFileStream();
+export const makeCreateTermFileStream = function*() {
+    const filename = generateFilenameStrict(config.filenameLength);
 
-    let index = -1;
-    const results: unknown[] = [];
+    const writeStream = fs.createWriteStream(path.join(config.filesDirPath, filename), 'utf-8');
+    const termFileStream = makeTermFileStream();
+
+    let part: Uint8Array | undefined = undefined;
 
     while (true) {
         // TODO(DakEnviy): Add handling of parser errors
-        const result = stream.next(index < parts.length ? parts[index] : undefined);
+        const result = termFileStream.next(part);
 
         if (result.done) {
-            break;
+            writeStream.end();
+
+            return `${config.baseUrl}/${filename}`;
         }
 
         if (result.value) {
-            results.push(result.value);
+            writeStream.write(result.value, 'utf-8');
         } else {
-            ++index;
+            part = yield;
         }
     }
-
-    console.log(results);
-
-    await fs.promises.writeFile(filepath, content);
-};
-
-export const createFile = async (content: Buffer): Promise<string> => {
-    const filename = generateFilename(config.filenameLength);
-    const filepath = path.join(config.filesDirPath, filename);
-
-    if (fs.existsSync(filepath)) {
-        return createFile(content);
-    }
-
-    await writeFile(path.join(config.filesDirPath, filename), content);
-
-    return `${config.baseUrl}/${filename}`;
 };

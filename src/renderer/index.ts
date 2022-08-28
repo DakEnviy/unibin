@@ -5,12 +5,9 @@ export const makeAnsiHtmlRenderer = function*() {
         const token: IAnsiToken | undefined = yield;
 
         if (!token) {
-            // TODO(DakEnviy): Think about it
             return;
         }
 
-        console.log('TOKEN', token);
-
-        yield Buffer.from(`T${token.type.toString()} `, 'utf-8');
+        yield Buffer.from(`${JSON.stringify(token)}\n`, 'utf-8');
     }
 };

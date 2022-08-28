@@ -137,29 +137,24 @@ export const makeAnsiParser = function*() {
 export const makeAnsiBufferParser = function*() {
     const ansiParser = makeAnsiParser();
 
+    let part: Uint8Array | undefined = undefined;
+    let index = 0;
+
     while (true) {
-        const part: Uint8Array | undefined = yield;
+        const char = part?.[index] ?? EOF;
+        const result = ansiParser.next(char);
 
-        let index = -1;
+        if (result.done) {
+            return;
+        }
 
-        while (true) {
-            const char = part && index >= 0 ? part[index] : EOF;
-
-            if (char === undefined) {
-                break;
-            }
-
-            const result = ansiParser.next(char);
-
-            if (result.done) {
-                return;
-            }
-
-            if (result.value) {
-                yield result.value;
-            } else {
-                ++index;
-            }
+        if (result.value) {
+            yield result.value;
+        } else if (!part || index === part.byteLength - 1) {
+            part = yield;
+            index = 0;
+        } else {
+            ++index;
         }
     }
 };

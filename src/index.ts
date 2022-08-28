@@ -1,8 +1,8 @@
 import net from 'net';
 
 import { config } from './config';
-import { createFile } from './createFile';
 import { startCleanFilesJob } from './startCleanFilesJob';
+import { makeCreateTermFileStream } from './createFile';
 
 const server = net.createServer();
 
@@ -11,30 +11,35 @@ server.maxConnections = config.maxConnections;
 server.on('connection', socket => {
     socket.setTimeout(config.socketTimeout);
 
-    const parts: Buffer[] = [];
-    let size = 0;
+    const createTermFileStream = makeCreateTermFileStream();
+    let fileSize = 0;
 
-    const appendFilePart = (part: Buffer) => {
-        size += part.byteLength;
+    // Go to first yield
+    createTermFileStream.next();
 
-        if (size > config.maxFileSize) {
+    socket.on('data', data => {
+        fileSize += data.byteLength;
+
+        // TODO(DakEnviy): Think about it
+        if (fileSize > config.maxFileSize) {
+            // @ts-ignore
+            createTermFileStream.return();
             socket.end(`File size should be less than ${config.maxFileSize} bytes\b`);
 
             return;
         }
 
-        parts.push(part);
-    };
-
-    socket.on('data', data => {
-        appendFilePart(data);
+        createTermFileStream.next(data);
     });
 
     // TODO(DakEnviy): Test: close connection before timeout event has been invoked
-    socket.on('timeout', async () => {
-        const url = await createFile(Buffer.concat(parts));
+    socket.on('timeout', () => {
+        const result = createTermFileStream.next();
 
-        socket.end(`${url}\n`);
+        // TODO(DakEnviy): Think about corner cases
+        if (result.done && result.value) {
+            socket.end(`${result.value}\n`);
+        }
     });
 });
 

@@ -16,7 +16,7 @@ export const makeTermFileStream = function*() {
             const result = renderer.next(token);
 
             if (result.done) {
-                break;
+                return;
             }
 
             if (result.value) {
