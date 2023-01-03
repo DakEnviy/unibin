@@ -15,13 +15,11 @@ export class ParserBuffer {
             throw new ParserError(`Buffer is overflow, max length: ${this.buffer.length}`);
         }
 
-        this.buffer[this.end] = byte;
+        this.buffer[(this.start + this.length) % this.buffer.length] = byte;
         ++this.length;
     }
 
-    flush(length?: number) {
-        length = length ?? this.length;
-
+    flush(length: number = this.length) {
         if (length > this.length) {
             throw new ParserError(`Cannot flush ${length} bytes, current length: ${this.length}`);
         }
@@ -29,20 +27,12 @@ export class ParserBuffer {
         const flushedBuffer = new Uint8Array(length);
 
         for (let i = 0; i < length; ++i) {
-            flushedBuffer[i] = this.buffer[this.getBufferIndex(i)]!;
+            flushedBuffer[i] = this.buffer[(this.start + i) % this.buffer.length]!;
         }
 
         this.start = (this.start + length) % this.buffer.length;
         this.length -= length;
 
         return flushedBuffer;
-    }
-
-    private get end() {
-        return (this.start + this.length) % this.buffer.length;
-    }
-
-    private getBufferIndex(index: number) {
-        return (this.start + index) % this.buffer.length;
     }
 }
