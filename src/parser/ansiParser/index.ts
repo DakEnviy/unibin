@@ -118,8 +118,8 @@ export const makeAnsiParser = function*() {
 
     while (true) {
         const char: number = yield;
-
         context.charRef.current = char;
+
         const stateKey = ansiParserMachine.next(context);
 
         if (stateKey === undefined) {

@@ -1,4 +1,4 @@
-import { IAnsiToken } from '../parser/ansiParser/tokens/types';
+import type { IAnsiToken } from '../parser/ansiParser/tokens/types';
 
 export const makeAnsiHtmlRenderer = function*() {
     while (true) {

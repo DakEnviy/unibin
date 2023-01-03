@@ -24,7 +24,7 @@ const generateFilenameStrict = (length: number): string => {
     return filename;
 };
 
-export const makeCreateTermFileStream = function*(): Generator<Uint8Array | undefined, string | void, Uint8Array | undefined> {
+export const makeCreateTermFileStream = function*(): Generator<undefined, string | void, Uint8Array | undefined> {
     const filename = generateFilenameStrict(config.filenameLength);
 
     const termFileStream = makeTermFileStream();
