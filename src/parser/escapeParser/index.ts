@@ -27,7 +27,7 @@ import {
 } from './constants';
 import { makeEscapeParameterToken, makeEscapeSgrToken } from './tokens';
 import { EscapeTokenType } from './tokens/constants';
-import type { IEscapeToken } from './tokens/types';
+import type { IEscapeTokenInternal } from './tokens/types';
 import { EOF } from '../lib/constants';
 
 export const makeEscapeParserMachine = () => {
@@ -83,10 +83,10 @@ export const makeEscapeParserMachine = () => {
         context.buffer.flush();
     };
 
-    const extractParameters = (tokens: IEscapeToken[]) => {
+    const extractParameters = (tokens: IEscapeTokenInternal[]) => {
         const parameters: number[] = [];
 
-        let token: IEscapeToken | undefined;
+        let token: IEscapeTokenInternal | undefined;
 
         while ((token = tokens[tokens.length - 1]) && token.type === EscapeTokenType.Parameter) {
             tokens.pop();

@@ -14,4 +14,5 @@ export interface IEscapeTokenSgr extends IEscapeTokenBase {
     attributes: number[];
 }
 
-export type IEscapeToken = IEscapeTokenParameter | IEscapeTokenSgr;
+export type IEscapeTokenInternal = IEscapeTokenParameter | IEscapeTokenSgr;
+export type IEscapeToken = IEscapeTokenSgr;

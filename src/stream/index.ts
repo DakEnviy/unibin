@@ -2,9 +2,9 @@ import { makeAnsiHtmlRenderer } from '../renderer';
 import { makeAnsiBufferParser } from '../parser/ansiParser';
 import type { IAnsiToken } from '../parser/ansiParser/tokens/types';
 
-export const makeTermFileStream = function*() {
+export const makeTermFileStream = function*(filename: string) {
     const parser = makeAnsiBufferParser();
-    const renderer = makeAnsiHtmlRenderer();
+    const renderer = makeAnsiHtmlRenderer(filename);
 
     let token: IAnsiToken | undefined = undefined;
     let part: Uint8Array | undefined = undefined;

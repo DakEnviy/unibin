@@ -27,7 +27,7 @@ const generateFilenameStrict = (length: number): string => {
 export const makeCreateTermFileStream = function*(): Generator<undefined, string | void, Uint8Array | undefined> {
     const filename = generateFilenameStrict(config.filenameLength);
 
-    const termFileStream = makeTermFileStream();
+    const termFileStream = makeTermFileStream(filename);
     const writeStream = fs.createWriteStream(path.join(config.filesDirPath, filename), 'utf-8');
 
     let part: Uint8Array | undefined = undefined;
